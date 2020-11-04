@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gpx_track.h"
+#include "track.h"
 
 #include <vector>
 

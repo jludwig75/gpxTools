@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gpx_activity.h"
+#include "activity.h"
 
 #include <string>
 

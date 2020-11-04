@@ -1,4 +1,4 @@
-#include "gpx_parser.h"
+#include "parser.h"
 
 namespace gpx
 {

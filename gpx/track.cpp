@@ -1,4 +1,4 @@
-#include "gpx_track.h"
+#include "track.h"
 
 namespace gpx
 {

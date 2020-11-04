@@ -1,4 +1,4 @@
-#include "gpx_activity.h"
+#include "activity.h"
 
 namespace gpx
 {

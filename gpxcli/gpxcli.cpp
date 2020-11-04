@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "gpxtools/gpx_parser.h"
+#include "gpx/parser.h"
 
 
 int parseGpxFile(const std::string& gpxFileName)

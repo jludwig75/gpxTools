@@ -1,5 +1,13 @@
-add_executable(gpx
-                gpx.cpp)
+add_library(gpx STATIC
+            activity.cpp
+            parser.cpp
+            track.cpp
+            gpxmath.cpp
+            position.cpp
+            surface_coordinates.cpp
+            track_point.cpp
+            track_segment.cpp)
 
-target_link_libraries(gpx
-                      PUBLIC gpxTools)
+set_target_properties(gpx PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}"
+)

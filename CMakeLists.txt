@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # set the project name
 project(gpxTools VERSION 1.0)
 
-add_subdirectory(gpxtools)
 add_subdirectory(gpx)
+add_subdirectory(gpxcli)
 add_subdirectory(gpxserver)
