@@ -1,5 +1,7 @@
 #include "surface_coordinates.h"
 
+#include "gpxmath.h"
+
 namespace gpx
 {
 
@@ -20,11 +22,9 @@ double SurfaceCoordinates::longitude() const
     return _longitude;
 }
 
-
 double operator-(const SurfaceCoordinates& a, const SurfaceCoordinates& b)
 {
-    // TODO: calculate the great circle distance
-    return 0;
+    return greatCircleDistance(a, b);
 }
 
 }
