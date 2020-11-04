@@ -2,7 +2,8 @@
 
 #include "surface_coordinates.h"
 
-
+namespace gpx
+{
 class Position
 {
 public:
@@ -15,3 +16,5 @@ private:
 };
 
 double operator-(const Position& a, const Position& b);
+
+}

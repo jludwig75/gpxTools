@@ -1,5 +1,7 @@
 #pragma once
 
+namespace gpx
+{
 
 class SurfaceCoordinates
 {
@@ -13,3 +15,5 @@ private:
 };
 
 double operator-(const SurfaceCoordinates& a, const SurfaceCoordinates& b);
+
+}

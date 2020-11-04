@@ -4,9 +4,9 @@
 
 #include <string>
 
-
-class GpxParser
+namespace gpx
 {
-public:
-    GpxActivity parseFile(const std::string& gpxFileName) const;
-};
+
+Activity parseFile(const std::string& gpxFileName);
+
+}

@@ -4,12 +4,16 @@
 
 #include <vector>
 
+namespace gpx
+{
 
-class GpxActivity
+class Activity
 {
 public:
-    void addTrack(const GpxTrack& track);
-    const std::vector<GpxTrack> tracks() const;
+    void addTrack(const Track& track);
+    const std::vector<Track> tracks() const;
 private:
-    std::vector<GpxTrack> _tracks;
+    std::vector<Track> _tracks;
 };
+
+}

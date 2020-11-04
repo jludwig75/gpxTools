@@ -1,29 +1,33 @@
 #include "gpx_track.h"
 
+namespace gpx
+{
 
-GpxTrack::GpxTrack(const std::string& name, unsigned type)
+Track::Track(const std::string& name, unsigned type)
     :
     _name(name),
     _type(type)
 {
 }
 
-const std::string& GpxTrack::name() const
+const std::string& Track::name() const
 {
     return _name;
 }
 
-unsigned GpxTrack::type() const
+unsigned Track::type() const
 {
     return _type;
 }
 
-void GpxTrack::addTrackSegment(const TrackSegment& segment)
+void Track::addTrackSegment(const TrackSegment& segment)
 {
     _trackSegments.push_back(segment);
 }
 
-std::vector<TrackSegment> GpxTrack::trackSegments() const
+std::vector<TrackSegment> Track::trackSegments() const
 {
     return _trackSegments;
+}
+
 }

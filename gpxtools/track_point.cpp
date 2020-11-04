@@ -1,6 +1,9 @@
 #include "track_point.h"
 
 
+namespace gpx
+{
+
 TrackPoint::TrackPoint(const Position& position, std::time_t time)
     :
     _position(position),
@@ -18,3 +21,4 @@ std::time_t TrackPoint::time() const
     return _time;
 }
 
+}

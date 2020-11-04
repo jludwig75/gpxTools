@@ -4,6 +4,8 @@
 
 #include <ctime>
 
+namespace gpx
+{
 class TrackPoint
 {
 public:
@@ -15,3 +17,4 @@ private:
     std::time_t _time;
 };
 
+}

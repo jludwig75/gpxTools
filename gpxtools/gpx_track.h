@@ -4,10 +4,12 @@
 
 #include <string>
 
-class GpxTrack
+namespace gpx
+{
+class Track
 {
 public:
-    GpxTrack(const std::string& name, unsigned type);
+    Track(const std::string& name, unsigned type);
     const std::string& name() const;
     unsigned type() const;
     void addTrackSegment(const TrackSegment& segment);
@@ -17,3 +19,5 @@ private:
     unsigned _type;
     std::vector<TrackSegment> _trackSegments;
 };
+
+}

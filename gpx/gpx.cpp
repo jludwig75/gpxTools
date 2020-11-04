@@ -7,8 +7,7 @@
 
 int parseGpxFile(const std::string& gpxFileName)
 {
-    GpxParser parser;
-    auto activity = parser.parseFile(gpxFileName);
+    auto activity = gpx::parseFile(gpxFileName);
     return 0;
 }
 

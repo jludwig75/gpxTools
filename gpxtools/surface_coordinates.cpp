@@ -1,5 +1,7 @@
 #include "surface_coordinates.h"
 
+namespace gpx
+{
 
 SurfaceCoordinates::SurfaceCoordinates(double latitude, double longitude)
     :
@@ -16,4 +18,13 @@ double SurfaceCoordinates::latitude() const
 double SurfaceCoordinates::longitude() const
 {
     return _longitude;
+}
+
+
+double operator-(const SurfaceCoordinates& a, const SurfaceCoordinates& b)
+{
+    // TODO: calculate the great circle distance
+    return 0;
+}
+
 }

@@ -4,6 +4,8 @@
 
 #include <vector>
 
+namespace gpx
+{
 class TrackSegment
 {
 public:
@@ -13,3 +15,4 @@ private:
     std::vector<TrackPoint> _trackPoints;
 };
 
+}

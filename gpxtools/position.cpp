@@ -2,6 +2,9 @@
 
 #include "gpxmath.h"
 
+namespace gpx
+{
+
 double operator-(const Position& a, const Position& b)
 {
     auto surfaceDistance = b.coords() - a.coords();
@@ -24,4 +27,6 @@ const SurfaceCoordinates& Position::coords() const
 double Position::altitude() const
 {
     return _altitude;
+}
+
 }
