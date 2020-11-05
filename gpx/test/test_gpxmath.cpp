@@ -11,28 +11,31 @@
 using namespace gpx;
 
 
-// bool floats_equal(float A, float B,
-//                          float maxRelDiff = FLT_EPSILON)
-// {
-//     // Calculate the difference.
-//     float diff = fabs(A - B);
-//     A = fabs(A);
-//     B = fabs(B);
-//     // Find the largest
-//     float largest = (B > A) ? B : A;
- 
-//     if (diff <= largest * maxRelDiff)
-//         return true;
-//     return false;
-// }
-bool floats_equal(float A, float B, float maxDiff)
+template<typename ValueType>
+ValueType floats_equal_pct(ValueType A, ValueType B,
+                         ValueType maxRelDiff = FLT_EPSILON)
 {
     // Calculate the difference.
-    float diff = fabs(A - B);
-    A = fabs(A);
-    B = fabs(B);
+    ValueType diff = std::fabs(A - B);
+    A = std::fabs(A);
+    B = std::fabs(B);
     // Find the largest
-    float largest = (B > A) ? B : A;
+    ValueType largest = (B > A) ? B : A;
+ 
+    if (diff <= largest * maxRelDiff)
+        return true;
+    return false;
+}
+
+template<typename ValueType>
+ValueType floats_equal(ValueType A, ValueType B, ValueType maxDiff)
+{
+    // Calculate the difference.
+    ValueType diff = std::fabs(A - B);
+    A = std::fabs(A);
+    B = std::fabs(B);
+    // Find the largest
+    ValueType largest = (B > A) ? B : A;
  
     if (diff <= maxDiff)
         return true;
@@ -45,11 +48,11 @@ TEST_CASE( "Great Circle Disance", "" )
     {
         SurfaceCoordinates a(90, 0);
         SurfaceCoordinates b(90, 1);
-        REQUIRE(floats_equal(a - b, 0, 0.001));  // accurate to 1 mm
+        REQUIRE(floats_equal(a - b, 0.0, 0.001));  // accurate to 1 mm
 
         SurfaceCoordinates x(-90, 0);
         SurfaceCoordinates y(-90, 1);
-        REQUIRE(floats_equal(x - y, 0, 0.001));  // accurate to 1 mm
+        REQUIRE(floats_equal(x - y, 0.0, 0.001));  // accurate to 1 mm
     }
     SECTION("1 Degree longitude at equator")
     {
