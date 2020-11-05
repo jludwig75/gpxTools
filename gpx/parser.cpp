@@ -36,6 +36,15 @@ ValueType fromString(const std::string& str)
     return v;
 }
 
+std::time_t parseTimeString(const std::string& timeStr)
+{
+    std::tm tm = {};
+    std::stringstream ss(timeStr);
+    // 2020-10-31T16:35:15Z
+    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+    return timegm(&tm);
+}
+
 
 TrackPoint parseTrackPoint(DOMElement* trackPointElement)
 {
@@ -44,7 +53,6 @@ TrackPoint parseTrackPoint(DOMElement* trackPointElement)
     double longitude = std::numeric_limits<double>::infinity();
     double altitude = std::numeric_limits<double>::infinity();
     std::time_t time = 0;
-    std::string timeStr;
 
     auto TAG_lat = XMLString::transcode("lat");
     auto TAG_lon = XMLString::transcode("lon");
@@ -73,12 +81,8 @@ TrackPoint parseTrackPoint(DOMElement* trackPointElement)
                 else if( XMLString::equals(trackSegmentChildElement->getTagName(), TAG_time))
                 {
                     DOMNode *node = trackSegmentChildElement->getFirstChild();
-                    timeStr = XMLString::transcode(node->getNodeValue());
-                    std::tm tm = {};
-                    std::stringstream ss(timeStr);
-                    // 2020-10-31T16:35:15Z
-                    ss >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
-                    time = timegm(&tm);
+                    std::string timeStr = XMLString::transcode(node->getNodeValue());
+                    time = parseTimeString(timeStr);
                 }
             }
         }
@@ -192,6 +196,8 @@ Activity Parser::parseFile(const std::string& gpxFileName)
 {
     auto TAG_root = XMLString::transcode("gpx");
     auto TAG_track = XMLString::transcode("trk");
+    auto TAG_metadata = XMLString::transcode("metadata");
+    auto TAG_time = XMLString::transcode("time");
 
     auto parser = std::make_unique<XercesDOMParser>();
     // Configure DOM parser.
@@ -222,6 +228,31 @@ Activity Parser::parseFile(const std::string& gpxFileName)
             if( XMLString::equals(currentElement->getTagName(), TAG_track))
             {
                 activity.addTrack(parseTrack(currentElement));
+            }
+            else if( XMLString::equals(currentElement->getTagName(), TAG_metadata))
+            {
+                DOMNodeList* metadatChildren = currentElement->getChildNodes();
+                const  XMLSize_t metadatChildrenCount = metadatChildren->getLength();
+                for( XMLSize_t t = 0; t < metadatChildrenCount; ++t )
+                {
+                    DOMNode* metadatChildNode = metadatChildren->item(t);
+                    if( metadatChildNode->getNodeType())  // true is not NULL
+                    {
+                        if (metadatChildNode->getNodeType() == DOMNode::ELEMENT_NODE ) // is element
+                        {
+                            // Found node which is an Element. Re-cast node as element
+                            DOMElement* metadatChildElement
+                                        = dynamic_cast< xercesc::DOMElement* >( metadatChildNode );
+                            if( XMLString::equals(metadatChildElement->getTagName(), TAG_time))
+                            {
+                                DOMNode *node = metadatChildElement->getFirstChild();
+                                std::string timeStr = XMLString::transcode(node->getNodeValue());
+                                std::time_t time = parseTimeString(timeStr);
+                                activity.setStartTime(time);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
