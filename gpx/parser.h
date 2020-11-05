@@ -9,4 +9,4 @@ namespace gpx
 
 Activity parseFile(const std::string& gpxFileName);
 
-}
+}   // namepsace gpx

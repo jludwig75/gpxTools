@@ -16,4 +16,4 @@ private:
 
 double operator-(const SurfaceCoordinates& a, const SurfaceCoordinates& b);
 
-}
+}   // namepsace gpx

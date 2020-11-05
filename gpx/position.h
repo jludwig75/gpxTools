@@ -7,7 +7,7 @@ namespace gpx
 class Position
 {
 public:
-    Position(const SurfaceCoordinates& coords, double altitude);
+    Position(SurfaceCoordinates&& coords, double altitude);
     const SurfaceCoordinates& coords() const;
     double altitude() const;
 private:
@@ -15,6 +15,21 @@ private:
     double _altitude;
 };
 
-double operator-(const Position& a, const Position& b);
 
-}
+class Displacement
+{
+public:
+    Displacement(double horizontal, double vertical)
+        :
+        horizontal(horizontal),
+        vertical(vertical)
+    {
+
+    }
+    double horizontal;
+    double vertical;
+};
+
+Displacement operator-(const Position& a, const Position& b);
+
+}   // namepsace gpx

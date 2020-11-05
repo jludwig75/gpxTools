@@ -12,7 +12,7 @@ public:
     Track(const std::string& name, unsigned type);
     const std::string& name() const;
     unsigned type() const;
-    void addTrackSegment(const TrackSegment& segment);
+    void addTrackSegment(TrackSegment&& segment);
     std::vector<TrackSegment> trackSegments() const;
 private:
     std::string _name;
@@ -20,4 +20,4 @@ private:
     std::vector<TrackSegment> _trackSegments;
 };
 
-}
+}   // namepsace gpx

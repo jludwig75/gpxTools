@@ -4,9 +4,9 @@
 namespace gpx
 {
 
-void TrackSegment::addTrackPoint(const TrackPoint& trackPoint)
+void TrackSegment::addTrackPoint(TrackPoint&& trackPoint)
 {
-    _trackPoints.push_back(trackPoint);
+    _trackPoints.emplace_back(trackPoint);
 }
 
 
@@ -15,4 +15,4 @@ std::vector<TrackPoint> TrackSegment::trackPoints() const
     return _trackPoints;
 }
 
-}
+}   // namepsace gpx

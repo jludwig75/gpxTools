@@ -20,9 +20,9 @@ unsigned Track::type() const
     return _type;
 }
 
-void Track::addTrackSegment(const TrackSegment& segment)
+void Track::addTrackSegment(TrackSegment&& segment)
 {
-    _trackSegments.push_back(segment);
+    _trackSegments.emplace_back(segment);
 }
 
 std::vector<TrackSegment> Track::trackSegments() const
@@ -30,4 +30,4 @@ std::vector<TrackSegment> Track::trackSegments() const
     return _trackSegments;
 }
 
-}
+}   // namepsace gpx

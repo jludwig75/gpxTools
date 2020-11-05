@@ -3,9 +3,9 @@
 namespace gpx
 {
 
-void Activity::addTrack(const Track& track)
+void Activity::addTrack(Track&& track)
 {
-    _tracks.push_back(track);
+    _tracks.emplace_back(track);
 }
 
 const std::vector<Track> Activity::tracks() const

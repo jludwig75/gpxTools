@@ -27,4 +27,4 @@ double operator-(const SurfaceCoordinates& a, const SurfaceCoordinates& b)
     return greatCircleDistance(a, b);
 }
 
-}
+}   // namepsace gpx

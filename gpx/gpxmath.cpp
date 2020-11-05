@@ -4,7 +4,6 @@
 
 namespace gpx
 {
-
 namespace
 {
 
@@ -14,7 +13,7 @@ Value radians(Value v)
     (v * M_PI) / 180.0;
 }
 
-}
+}   // namepsace
 
 double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordinates& pos2)
 {
@@ -26,6 +25,5 @@ double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordina
     auto c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
     return 6371000 * c;
 }
-
    
-}
+}   // namepsace gpx

@@ -10,7 +10,7 @@ namespace gpx
 class Activity
 {
 public:
-    void addTrack(const Track& track);
+    void addTrack(Track&& track);
     const std::vector<Track> tracks() const;
 private:
     std::vector<Track> _tracks;

@@ -5,14 +5,14 @@
 namespace gpx
 {
 
-double operator-(const Position& a, const Position& b)
+Displacement operator-(const Position& a, const Position& b)
 {
     auto surfaceDistance = b.coords() - a.coords();
-    auto vertialDistance = pathag(b.altitude(), a.altitude());
-    return pathag(surfaceDistance, vertialDistance);
+    auto vertialDistance = std::abs(b.altitude() - a.altitude());
+    return Displacement(surfaceDistance, vertialDistance);
 }
 
-Position::Position(const SurfaceCoordinates& coords, double altitude)
+Position::Position(SurfaceCoordinates&& coords, double altitude)
     :
     _coords(coords),
     _altitude(altitude)
@@ -29,4 +29,4 @@ double Position::altitude() const
     return _altitude;
 }
 
-}
+}   // namepsace gpx

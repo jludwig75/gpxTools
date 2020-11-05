@@ -14,4 +14,4 @@ Value pathag(Value a, Value b)
 class SurfaceCoordinates;
 double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordinates& pos2);
 
-}
+}   // namepsace gpx

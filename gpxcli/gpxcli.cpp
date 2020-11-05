@@ -8,6 +8,7 @@
 int parseGpxFile(const std::string& gpxFileName)
 {
     auto activity = gpx::parseFile(gpxFileName);
+    std::cout << "Prased " << activity.tracks()[0].trackSegments()[0].trackPoints().size() << " track points\n";
     return 0;
 }
 
