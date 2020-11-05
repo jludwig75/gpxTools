@@ -4,44 +4,22 @@
 
 #include "gpx/parser.h"
 #include "gpx/gpxcalc.h"
+#include "gpx/gpxmath.h"
 
+using namespace gpx;
 
 int parseGpxFile(const std::string& gpxFileName)
 {
-    auto activity = gpx::parseFile(gpxFileName);
+    auto activity = parseFile(gpxFileName);
     std::cout << "Prased " << activity.tracks()[0].trackSegments()[0].trackPoints().size() << " track points\n";
     return 0;
 }
 
-template<typename ValueType>
-ValueType mps_to_kph(ValueType mps)
-{
-    return mps * 60.0 * 60.0 / 1000.0;
-}
-
-template<typename ValueType>
-ValueType mps_to_mph(ValueType mps)
-{
-    return mps * 60.0 * 60.0 * 3.28084 / 5280.0;
-}
-
-template<typename ValueType>
-ValueType m_to_miles(ValueType m)
-{
-    return m * 3.28084 / 5280.0;
-}
-
-template<typename ValueType>
-ValueType m_to_ft(ValueType m)
-{
-    return m * 3.28084;
-}
-
 int plotStats(const std::string& gpxFileName)
 {
-    auto activity = gpx::parseFile(gpxFileName);
+    auto activity = parseFile(gpxFileName);
     std::cout << "time,altitude (meters),grade,speed (kph),rate of climb (m/s)\n";
-    gpx::GpxCalculator calculator;
+    GpxCalculator calculator;
     for (const auto& track : activity.tracks())
     {
         auto dataStream = calculator.analyzeTrack(track);
@@ -55,8 +33,8 @@ int plotStats(const std::string& gpxFileName)
 
 int summarize(const std::string& gpxFileName)
 {
-    auto activity = gpx::parseFile(gpxFileName);
-    gpx::GpxCalculator calculator;
+    auto activity = parseFile(gpxFileName);
+    GpxCalculator calculator;
     for (const auto& track : activity.tracks())
     {
         auto dataStream = calculator.analyzeTrack(track);
