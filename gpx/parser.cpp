@@ -26,11 +26,11 @@ namespace gpx
 namespace
 {
 
-template<typename Value>
-Value fromString(const std::string& str)
+template<typename ValueType>
+ValueType fromString(const std::string& str)
 {
     std::stringstream ss(str);
-    Value v;
+    ValueType v;
     ss >> v;
     assert(!ss.bad() && ss.eof());
     return v;

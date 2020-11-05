@@ -7,8 +7,8 @@ namespace gpx
 namespace
 {
 
-template<typename Value>
-Value radians(Value v)
+template<typename ValueType>
+ValueType radians(ValueType v)
 {
     return (v * M_PI) / 180.0;
 }

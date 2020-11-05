@@ -5,8 +5,8 @@
 namespace gpx
 {
 
-template<typename Value>
-Value pathag(Value a, Value b)
+template<typename ValueType>
+ValueType pathag(ValueType a, ValueType b)
 {
     return std::sqrt(a * a + b * b);
 }
