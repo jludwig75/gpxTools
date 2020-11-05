@@ -55,10 +55,37 @@ public:
 
 using DataStream = std::vector<DataPoint>;
 
+class DataSummary
+{
+public:
+    DataSummary(std::chrono::duration<double> duration, double totalDistance, double totalAscent, double totalDescent)
+        :
+        duration(duration),
+        totalDistance(totalDistance),
+        totalAscent(totalAscent),
+        totalDescent(totalDescent)
+    {
+    }
+    std::chrono::duration<double> duration;
+    double totalDistance;
+    double totalAscent;
+    double totalDescent;
+    double averageSpeed() const
+    {
+        if (duration.count() == 0)
+        {
+            return 0;
+        }
+
+        return totalDistance / duration.count();
+    }
+};
+
 class GpxCalculator
 {
 public:
     DataStream analyzeTrack(const Track& track);
+    DataSummary summarizeStream(const DataStream& dataStream);
 };
 
 }

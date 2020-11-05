@@ -60,26 +60,13 @@ int summarize(const std::string& gpxFileName)
     for (const auto& track : activity.tracks())
     {
         auto dataStream = calculator.analyzeTrack(track);
-        double totalAscent = 0;
-        double totalDescent = 0;
-        for (const auto& dp : dataStream)
-        {
-            if (dp.verticalDisplacement > 0)
-            {
-                totalAscent += dp.verticalDisplacement;
-            }
-            else if (dp.verticalDisplacement < 0)
-            {
-                totalDescent += -dp.verticalDisplacement;
-            }
-        }
-        auto totalDistance = dataStream.back().totalDistance;
-        auto elapsedTime = dataStream.back().relStartTime;
+        auto summary = calculator.summarizeStream(dataStream);
+        auto elapsedTime = summary.duration.count();
         std::cout << "Totalt time: " << uint64_t(elapsedTime) / 3600 << ":" << (uint64_t(elapsedTime) % 3600) / 60 << ":" << ((uint64_t(elapsedTime) % 3600) % 60) << "\n";
-        std::cout << "Totalt distance: " << totalDistance / 1000.0 << " km " << m_to_miles(totalDistance) << " miles\n";
-        std::cout << "Average speed: " << mps_to_kph(totalDistance / elapsedTime) << " km/h " << mps_to_mph(totalDistance / elapsedTime) << "mph\n";
-        std::cout << "Total Ascent: " << totalAscent << " meters " << m_to_ft(totalAscent) << " feet\n";
-        std::cout << "Total Descent: " << totalDescent << " meters " << m_to_ft(totalDescent) << " feet\n";
+        std::cout << "Totalt distance: " << summary.totalDistance / 1000.0 << " km " << m_to_miles(summary.totalDistance) << " miles\n";
+        std::cout << "Average speed: " << mps_to_kph(summary.totalDistance / elapsedTime) << " km/h " << mps_to_mph(summary.totalDistance / elapsedTime) << "mph\n";
+        std::cout << "Total Ascent: " << summary.totalAscent << " meters " << m_to_ft(summary.totalAscent) << " feet\n";
+        std::cout << "Total Descent: " << summary.totalDescent << " meters " << m_to_ft(summary.totalDescent) << " feet\n";
     }
     return 0;
 }

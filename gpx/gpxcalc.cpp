@@ -43,4 +43,27 @@ DataStream GpxCalculator::analyzeTrack(const Track& track)
     return stream;
 }
 
+DataSummary GpxCalculator::summarizeStream(const DataStream& dataStream)
+{
+    double totalAscent = 0;
+    double totalDescent = 0;
+    for (const auto& dp : dataStream)
+    {
+        if (dp.verticalDisplacement > 0)
+        {
+            totalAscent += dp.verticalDisplacement;
+        }
+        else if (dp.verticalDisplacement < 0)
+        {
+            totalDescent += -dp.verticalDisplacement;
+        }
+    }
+
+    auto totalDistance = dataStream.back().totalDistance;
+    auto elapsedTime = dataStream.back().relStartTime;
+
+    return DataSummary(std::chrono::duration<double>(elapsedTime), totalDistance, totalAscent, totalDescent);
+}
+
+
 }   // namespace gpx
