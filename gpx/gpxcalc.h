@@ -14,19 +14,21 @@ class Track;
 class DataPoint
 {
 public:
-    DataPoint(std::time_t startTime, std::chrono::duration<double> duration, double altitude, double horizontalDisplacement, double verticalDisplacement)
+    DataPoint(std::time_t relStartTime, std::chrono::duration<double> duration, double totalDistance, double altitude, double horizontalDisplacement, double verticalDisplacement)
         :
-        startTime(startTime),
+        relStartTime(relStartTime),
         duration(duration),
+        totalDistance(totalDistance),
         altitude(altitude),
         horizontalDisplacement(horizontalDisplacement),
         verticalDisplacement(verticalDisplacement)
     {
         assert(horizontalDisplacement >= 0);
     }
-    std::time_t startTime;
+    std::time_t relStartTime;
     std::chrono::duration<double> duration;
     double altitude;
+    double totalDistance;
     double horizontalDisplacement;
     double verticalDisplacement;
     double speed() const

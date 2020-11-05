@@ -15,18 +15,25 @@ DataStream GpxCalculator::analyzeTrack(const Track& track)
         return stream;
     }
 
+    const TrackPoint* start = NULL;
     const TrackPoint* previous = NULL;
+    double totalDistance = 0;
 
     for (const auto& segment : track.trackSegments())
     {
         for (const auto& point : segment.trackPoints())
         {
+            if (start == NULL)
+            {
+                start = &point;
+            }
             if (previous != NULL)
             {
                 assert(point.time() >= previous->time());
 
                 auto displacement = point.position() - previous->position();
-                stream.emplace_back(point.time(), std::chrono::duration<double>(point.time() - previous->time()), point.position().altitude(), displacement.horizontal, displacement.vertical);
+                totalDistance += displacement.horizontal;
+                stream.emplace_back(point.time() - start->time(), std::chrono::duration<double>(point.time() - previous->time()), totalDistance, point.position().altitude(), displacement.horizontal, displacement.vertical);
             }
 
             previous = &point;
