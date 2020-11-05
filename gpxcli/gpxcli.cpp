@@ -10,14 +10,16 @@ using namespace gpx;
 
 int parseGpxFile(const std::string& gpxFileName)
 {
-    auto activity = parseFile(gpxFileName);
+    Parser parser;
+    auto activity = parser.parseFile(gpxFileName);
     std::cout << "Prased " << activity.tracks()[0].trackSegments()[0].trackPoints().size() << " track points\n";
     return 0;
 }
 
 int plotStats(const std::string& gpxFileName)
 {
-    auto activity = parseFile(gpxFileName);
+    Parser parser;
+    auto activity = parser.parseFile(gpxFileName);
     std::cout << "time,altitude (meters),grade,speed (kph),rate of climb (m/s)\n";
     GpxCalculator calculator;
     for (const auto& track : activity.tracks())
@@ -33,7 +35,8 @@ int plotStats(const std::string& gpxFileName)
 
 int summarize(const std::string& gpxFileName)
 {
-    auto activity = parseFile(gpxFileName);
+    Parser parser;
+    auto activity = parser.parseFile(gpxFileName);
     GpxCalculator calculator;
     for (const auto& track : activity.tracks())
     {
@@ -59,6 +62,8 @@ int usage(const std::string& message, int ec = 0)
     std::cout << "GPX utility\nUsage:\n\tgpx <command> <args ...>\n";
     std::cout << "Comamnd can be:\n";
     std::cout << "\tparse <gpx_file_name>\n";
+    std::cout << "\tplot <gpx_file_name>\n";
+    std::cout << "\tsummarize <gpx_file_name>\n";
     return ec;
 }
 

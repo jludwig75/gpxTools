@@ -12,15 +12,15 @@ using namespace gpx;
 
 
 template<typename ValueType>
-ValueType floats_equal_pct(ValueType A, ValueType B,
+ValueType floats_equal_pct(ValueType a, ValueType b,
                          ValueType maxRelDiff = FLT_EPSILON)
 {
     // Calculate the difference.
-    ValueType diff = std::fabs(A - B);
-    A = std::fabs(A);
-    B = std::fabs(B);
+    ValueType diff = std::fabs(a - b);
+    a = std::fabs(a);
+    b = std::fabs(b);
     // Find the largest
-    ValueType largest = (B > A) ? B : A;
+    ValueType largest = (b > a) ? b : a;
  
     if (diff <= largest * maxRelDiff)
         return true;
@@ -28,14 +28,14 @@ ValueType floats_equal_pct(ValueType A, ValueType B,
 }
 
 template<typename ValueType>
-ValueType floats_equal(ValueType A, ValueType B, ValueType maxDiff)
+ValueType floats_equal(ValueType a, ValueType b, ValueType maxDiff)
 {
     // Calculate the difference.
-    ValueType diff = std::fabs(A - B);
-    A = std::fabs(A);
-    B = std::fabs(B);
+    ValueType diff = std::fabs(a - b);
+    a = std::fabs(a);
+    b = std::fabs(b);
     // Find the largest
-    ValueType largest = (B > A) ? B : A;
+    ValueType largest = (b > a) ? b : a;
  
     if (diff <= maxDiff)
         return true;

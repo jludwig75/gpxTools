@@ -36,6 +36,7 @@ ValueType fromString(const std::string& str)
     return v;
 }
 
+
 TrackPoint parseTrackPoint(DOMElement* trackPointElement)
 {
     // TODO: parse this from XML
@@ -50,7 +51,7 @@ TrackPoint parseTrackPoint(DOMElement* trackPointElement)
     auto TAG_ele = XMLString::transcode("ele");
     auto TAG_time = XMLString::transcode("time");
 
-    DOMNodeList*      trackPointChildren = trackPointElement->getChildNodes();
+    DOMNodeList* trackPointChildren = trackPointElement->getChildNodes();
     const  XMLSize_t trackPointChildrenCount = trackPointChildren->getLength();
     for( XMLSize_t t = 0; t < trackPointChildrenCount; ++t )
     {
@@ -99,7 +100,7 @@ TrackPoint parseTrackPoint(DOMElement* trackPointElement)
             longitude != std::numeric_limits<double>::infinity() &&
             altitude != std::numeric_limits<double>::infinity() &&
             time != 0);
-    return TrackPoint(std::move(Position(std::move(SurfaceCoordinates(latitude, longitude)), altitude)), time);
+    return TrackPoint(Position(SurfaceCoordinates(latitude, longitude), altitude), time);
 }
 
 TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
@@ -108,7 +109,7 @@ TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
 
     TrackSegment segment;
 
-    DOMNodeList*      trackSegmentChildren = trackSegmentElement->getChildNodes();
+    DOMNodeList* trackSegmentChildren = trackSegmentElement->getChildNodes();
     const  XMLSize_t trackSgementChildrenCount = trackSegmentChildren->getLength();
     for( XMLSize_t t = 0; t < trackSgementChildrenCount; ++t )
     {
@@ -121,7 +122,7 @@ TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
                         = dynamic_cast< xercesc::DOMElement* >( trackSegmentChildNode );
             if( XMLString::equals(trackSegmentChildElement->getTagName(), TAG_trackPt))
             {
-                segment.addTrackPoint(std::move(parseTrackPoint(trackSegmentChildElement)));
+                segment.addTrackPoint(parseTrackPoint(trackSegmentChildElement));
             }
         }
     }
@@ -139,7 +140,7 @@ Track parseTrack(DOMElement* trackElement)
     unsigned trackType = UINT_MAX;
     DOMElement* foundTrackChildElement = NULL;
 
-    DOMNodeList*      trackChildren = trackElement->getChildNodes();
+    DOMNodeList* trackChildren = trackElement->getChildNodes();
     const  XMLSize_t trackCount = trackChildren->getLength();
     for( XMLSize_t t = 0; t < trackCount; ++t )
     {
@@ -170,30 +171,25 @@ Track parseTrack(DOMElement* trackElement)
 
     Track track(trackName, trackType);
     assert(foundTrackChildElement != NULL);
-    track.addTrackSegment(std::move(parseTrackSegment(foundTrackChildElement)));
+    track.addTrackSegment(parseTrackSegment(foundTrackChildElement));
 
     return track;
 }   // namespace
 
-class XercesPlatformInit
-{
-public:
-    XercesPlatformInit()
-    {
-        XMLPlatformUtils::Initialize();
-    }
-    ~XercesPlatformInit()
-    {
-        XMLPlatformUtils::Terminate();
-    }
-};
-
 }
 
-Activity parseFile(const std::string& gpxFileName)
+Parser::Parser()
 {
-    XercesPlatformInit platform;
+    XMLPlatformUtils::Initialize();
+}
 
+Parser::~Parser()
+{
+    XMLPlatformUtils::Terminate();
+}
+
+Activity Parser::parseFile(const std::string& gpxFileName)
+{
     auto TAG_root = XMLString::transcode("gpx");
     auto TAG_track = XMLString::transcode("trk");
 
@@ -208,7 +204,7 @@ Activity parseFile(const std::string& gpxFileName)
 
     auto xmlDoc = parser->getDocument();
     auto elementRoot = xmlDoc->getDocumentElement();
-    DOMNodeList*      children = elementRoot->getChildNodes();
+    DOMNodeList* children = elementRoot->getChildNodes();
     const  XMLSize_t nodeCount = children->getLength();
 
     Activity activity;
@@ -225,7 +221,7 @@ Activity parseFile(const std::string& gpxFileName)
                         = dynamic_cast< xercesc::DOMElement* >( currentNode );
             if( XMLString::equals(currentElement->getTagName(), TAG_track))
             {
-                activity.addTrack(std::move(parseTrack(currentElement)));
+                activity.addTrack(parseTrack(currentElement));
             }
         }
     }

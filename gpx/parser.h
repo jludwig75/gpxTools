@@ -7,6 +7,12 @@
 namespace gpx
 {
 
-Activity parseFile(const std::string& gpxFileName);
+class Parser
+{
+public:
+    Parser();
+    ~Parser();
+    Activity parseFile(const std::string& gpxFileName);
+};
 
 }   // namepsace gpx
