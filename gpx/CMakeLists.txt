@@ -1,5 +1,6 @@
 add_library(gpx STATIC
             activity.cpp
+            gpxcalc.cpp
             parser.cpp
             track.cpp
             gpxmath.cpp
@@ -11,3 +12,5 @@ add_library(gpx STATIC
 set_target_properties(gpx PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}"
 )
+
+add_subdirectory(test)

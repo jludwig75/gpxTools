@@ -7,8 +7,8 @@ namespace gpx
 
 Displacement operator-(const Position& a, const Position& b)
 {
-    auto surfaceDistance = b.coords() - a.coords();
-    auto vertialDistance = std::abs(b.altitude() - a.altitude());
+    auto surfaceDistance = a.coords() - b.coords();
+    auto vertialDistance = a.altitude() - b.altitude();
     return Displacement(surfaceDistance, vertialDistance);
 }
 

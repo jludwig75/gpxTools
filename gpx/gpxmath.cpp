@@ -10,7 +10,7 @@ namespace
 template<typename Value>
 Value radians(Value v)
 {
-    (v * M_PI) / 180.0;
+    return (v * M_PI) / 180.0;
 }
 
 }   // namepsace
