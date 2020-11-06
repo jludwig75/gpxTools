@@ -12,7 +12,7 @@ class Parser
 public:
     Parser();
     ~Parser();
-    Activity parseFile(const std::string& gpxFileName);
+    Activity parseFile(const std::string& gpxFileData);
 };
 
 }   // namepsace gpx

@@ -1,4 +1,6 @@
+#include <fstream>
 #include <iostream>
+#include <streambuf>
 #include <string>
 #include <vector>
 
@@ -8,10 +10,25 @@
 
 using namespace gpx;
 
+std::string readFile(const std::string& fileName)
+{
+    std::ifstream t(fileName);
+    std::string str;
+
+    t.seekg(0, std::ios::end);
+    str.reserve(t.tellg());
+    t.seekg(0, std::ios::beg);
+
+    str.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+
+    return str;
+}
+
 int parseGpxFile(const std::string& gpxFileName)
 {
     Parser parser;
-    auto activity = parser.parseFile(gpxFileName);
+    auto gpxData = readFile(gpxFileName);
+    auto activity = parser.parseFile(gpxData);
     std::cout << "Prased " << activity.tracks()[0].trackSegments()[0].trackPoints().size() << " track points\n";
     return 0;
 }
@@ -19,7 +36,8 @@ int parseGpxFile(const std::string& gpxFileName)
 int plotStats(const std::string& gpxFileName)
 {
     Parser parser;
-    auto activity = parser.parseFile(gpxFileName);
+    auto gpxData = readFile(gpxFileName);
+    auto activity = parser.parseFile(gpxData);
     std::cout << "time,altitude (meters),grade,speed (kph),rate of climb (m/s)\n";
     GpxCalculator calculator;
     for (const auto& track : activity.tracks())
@@ -36,7 +54,8 @@ int plotStats(const std::string& gpxFileName)
 int summarize(const std::string& gpxFileName)
 {
     Parser parser;
-    auto activity = parser.parseFile(gpxFileName);
+    auto gpxData = readFile(gpxFileName);
+    auto activity = parser.parseFile(gpxData);
     GpxCalculator calculator;
     for (const auto& track : activity.tracks())
     {

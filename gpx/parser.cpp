@@ -15,6 +15,8 @@
 #include <xercesc/dom/DOMNodeList.hpp>
 #include <xercesc/dom/DOMText.hpp>
 
+#include <xercesc/framework/MemBufInputSource.hpp>
+
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/XMLUni.hpp>
  
@@ -192,7 +194,7 @@ Parser::~Parser()
     XMLPlatformUtils::Terminate();
 }
 
-Activity Parser::parseFile(const std::string& gpxFileName)
+Activity Parser::parseFile(const std::string& gpxFileData)
 {
     auto TAG_root = XMLString::transcode("gpx");
     auto TAG_track = XMLString::transcode("trk");
@@ -206,7 +208,8 @@ Activity Parser::parseFile(const std::string& gpxFileName)
     parser->setDoSchema( false );
     parser->setLoadExternalDTD( false );
 
-    parser->parse(gpxFileName.c_str());
+    MemBufInputSource dataSource((const XMLByte*)gpxFileData.data(), gpxFileData.length(), "");
+    parser->parse(dataSource);
 
     auto xmlDoc = parser->getDocument();
     auto elementRoot = xmlDoc->getDocumentElement();
