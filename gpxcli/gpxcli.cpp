@@ -59,7 +59,8 @@ public:
         stub_(gpxtools::Parser::NewStub(channel))
     {
     }
-    bool parseFile(const std::string& gpxFileData, TrackPoints& trackPoints)
+    template<typename TrackPointTarget>
+    bool parseFile(const std::string& gpxFileData, TrackPointTarget& trackPoints)
     {
         ClientContext context;
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::GpxDataChunk, gpxtools::TrackPoint> > stream(stub_->parseFile(&context));
@@ -105,14 +106,18 @@ public:
         stub_(gpxtools::GpxCalculator::NewStub(channel))
     {
     }
-    bool analyzeTrack(const TrackPoints& trackPoints, DataStream& dataStream)
+    template<typename TrackPointSource, typename DataPointTarget>
+    bool analyzeTrack(TrackPointSource& trackPoints, DataPointTarget& dataStream)
     {
         ClientContext context;
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::TrackPoint, gpxtools::DataPoint> > stream(stub_->analyzeTrack(&context));
 
         std::thread writer([&stream, &trackPoints]() {
-            for (const auto& trackPoint : trackPoints)
+            while (!trackPoints.empty())
             {
+                auto trackPoint = trackPoints.front();
+                trackPoints.pop_front();
+
                 if (!stream->Write(trackPoint))
                 {
                     return false;
@@ -131,13 +136,17 @@ public:
         Status status = stream->Finish();
         return status.ok();
     }
-    bool summarizeStream(const DataStream& dataStream, gpxtools::DataSummary &dataSummary)
+    template<typename DataPointSource>
+    bool summarizeStream(DataPointSource& dataStream, gpxtools::DataSummary &dataSummary)
     {
         ClientContext context;
         std::unique_ptr<ClientWriter<gpxtools::DataPoint> > writer(stub_->summarizeStream(&context, &dataSummary));
 
-        for (const auto& dataPoint : dataStream)
+        while (!dataStream.empty())
         {
+            auto dataPoint = dataStream.front();
+            dataStream.pop_front();
+
             if (!writer->Write(dataPoint))
             {
                 std::cout << "Failed to write data point\n";
@@ -191,8 +200,10 @@ int plotStats(const std::string& gpxFileName)
     calculator.analyzeTrack(trackPoints, dataStream);
 
     std::cout << "time,altitude (meters),grade,speed (kph)\n";
-    for (const auto& dp : dataStream)
+    while (!dataStream.empty())
     {
+        auto dp = dataStream.front();
+        dataStream.pop_front();
         std::cout << dp.relstarttime() << "," << dp.totaldistance() << "," << dp.altitude() << "," << 100 * dp.grade() << "," << mps_to_kph(dp.speed()) << "\n";
     }
 
