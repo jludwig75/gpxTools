@@ -1,6 +1,6 @@
 #pragma once
 
-#include "activity.h"
+#include "gpxtools.pb.h"
 
 #include <string>
 
@@ -12,7 +12,7 @@ class Parser
 public:
     Parser();
     ~Parser();
-    Activity parseFile(const std::string& gpxFileData);
+    bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity);
 };
 
 }   // namepsace gpx

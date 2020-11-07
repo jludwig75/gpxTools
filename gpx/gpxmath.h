@@ -2,40 +2,28 @@
 
 #include <cmath>
 
+#include "gpxtools.pb.h"
+
 namespace gpx
 {
 
-template<typename ValueType>
-ValueType pathag(ValueType a, ValueType b)
-{
-    return std::sqrt(a * a + b * b);
-}
+double operator-(const gpxtools::SurfaceCoordinates& a, const gpxtools::SurfaceCoordinates& b);
 
-template<typename ValueType>
-ValueType mps_to_kph(ValueType mps)
+class Displacement
 {
-    return mps * 60.0 * 60.0 / 1000.0;
-}
+public:
+    Displacement(double horizontal, double vertical)
+        :
+        horizontal(horizontal),
+        vertical(vertical)
+    {
 
-template<typename ValueType>
-ValueType mps_to_mph(ValueType mps)
-{
-    return mps * 60.0 * 60.0 * 3.28084 / 5280.0;
-}
+    }
+    double horizontal;
+    double vertical;
+};
 
-template<typename ValueType>
-ValueType m_to_miles(ValueType m)
-{
-    return m * 3.28084 / 5280.0;
-}
-
-template<typename ValueType>
-ValueType m_to_ft(ValueType m)
-{
-    return m * 3.28084;
-}
-
-class SurfaceCoordinates;
-double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordinates& pos2);
+Displacement operator-(const gpxtools::Position& a, const gpxtools::Position& b);
 
 }   // namepsace gpx
+

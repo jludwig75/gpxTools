@@ -48,7 +48,7 @@ std::time_t parseTimeString(const std::string& timeStr)
 }
 
 
-TrackPoint parseTrackPoint(DOMElement* trackPointElement)
+gpxtools::TrackPoint parseTrackPoint(DOMElement* trackPointElement)
 {
     // TODO: parse this from XML
     double latitude = std::numeric_limits<double>::infinity();
@@ -106,14 +106,23 @@ TrackPoint parseTrackPoint(DOMElement* trackPointElement)
             longitude != std::numeric_limits<double>::infinity() &&
             altitude != std::numeric_limits<double>::infinity() &&
             time != 0);
-    return TrackPoint(Position(SurfaceCoordinates(latitude, longitude), altitude), time);
+    gpxtools::SurfaceCoordinates coords;
+    coords.set_latitude(latitude);
+    coords.set_longitude(longitude);
+    gpxtools::Position position;
+    *position.mutable_coords() = coords;
+    position.set_altitude(altitude);
+    gpxtools::TrackPoint trackPoint;
+    *trackPoint.mutable_position() = position;
+    trackPoint.set_time(time);
+    return trackPoint;
 }
 
-TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
+gpxtools::TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
 {
     auto TAG_trackPt = XMLString::transcode("trkpt");
 
-    TrackSegment segment;
+    gpxtools::TrackSegment segment;
 
     DOMNodeList* trackSegmentChildren = trackSegmentElement->getChildNodes();
     const  XMLSize_t trackSgementChildrenCount = trackSegmentChildren->getLength();
@@ -128,7 +137,8 @@ TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
                         = dynamic_cast< xercesc::DOMElement* >( trackSegmentChildNode );
             if( XMLString::equals(trackSegmentChildElement->getTagName(), TAG_trackPt))
             {
-                segment.addTrackPoint(parseTrackPoint(trackSegmentChildElement));
+                auto trackPoint = segment.add_trackpoints();
+                *trackPoint = parseTrackPoint(trackSegmentChildElement);
             }
         }
     }
@@ -136,7 +146,7 @@ TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
     return segment;
 }
 
-Track parseTrack(DOMElement* trackElement)
+gpxtools::Track parseTrack(DOMElement* trackElement)
 {
     auto TAG_trackSeg = XMLString::transcode("trkseg");
     auto TAG_name = XMLString::transcode("name");
@@ -175,9 +185,13 @@ Track parseTrack(DOMElement* trackElement)
         }
     }
 
-    Track track(trackName, trackType);
+    gpxtools::Track track;
+    track.set_name(trackName);
+    track.set_type(trackType);
     assert(foundTrackChildElement != NULL);
-    track.addTrackSegment(parseTrackSegment(foundTrackChildElement));
+    auto trackSegment = parseTrackSegment(foundTrackChildElement);
+    //track.addTrackSegment(trackSegment);
+    *track.add_tracksegments() = trackSegment;
 
     return track;
 }   // namespace
@@ -194,7 +208,7 @@ Parser::~Parser()
     XMLPlatformUtils::Terminate();
 }
 
-Activity Parser::parseFile(const std::string& gpxFileData)
+bool Parser::parseFile(const std::string& gpxFileData, gpxtools::Activity* activity)
 {
     auto TAG_root = XMLString::transcode("gpx");
     auto TAG_track = XMLString::transcode("trk");
@@ -216,8 +230,6 @@ Activity Parser::parseFile(const std::string& gpxFileData)
     DOMNodeList* children = elementRoot->getChildNodes();
     const  XMLSize_t nodeCount = children->getLength();
 
-    Activity activity;
-
     // For all nodes, children of "root" in the XML tree.
     for( XMLSize_t xx = 0; xx < nodeCount; ++xx )
     {
@@ -230,7 +242,7 @@ Activity Parser::parseFile(const std::string& gpxFileData)
                         = dynamic_cast< xercesc::DOMElement* >( currentNode );
             if( XMLString::equals(currentElement->getTagName(), TAG_track))
             {
-                activity.addTrack(parseTrack(currentElement));
+                *activity->add_tracks() = parseTrack(currentElement);
             }
             else if( XMLString::equals(currentElement->getTagName(), TAG_metadata))
             {
@@ -251,7 +263,7 @@ Activity Parser::parseFile(const std::string& gpxFileData)
                                 DOMNode *node = metadatChildElement->getFirstChild();
                                 std::string timeStr = XMLString::transcode(node->getNodeValue());
                                 std::time_t time = parseTimeString(timeStr);
-                                activity.setStartTime(time);
+                                activity->set_starttime(time);
                             }
                         }
                     }
@@ -260,7 +272,7 @@ Activity Parser::parseFile(const std::string& gpxFileData)
         }
     }
 
-    return activity;
+    return true;
 }
 
 }   // namepsace gpx

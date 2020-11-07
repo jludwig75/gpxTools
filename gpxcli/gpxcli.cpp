@@ -4,11 +4,127 @@
 #include <string>
 #include <vector>
 
-#include "gpx/parser.h"
-#include "gpx/gpxcalc.h"
-#include "gpx/gpxmath.h"
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
 
-using namespace gpx;
+#include "gpxtools.grpc.pb.h"
+
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::ClientReader;
+using grpc::ClientReaderWriter;
+using grpc::ClientWriter;
+using grpc::Status;
+
+
+#define MAX_DATA_CHUNCK_SIZE    (64 * 1024)
+
+template<typename ValueType>
+ValueType mps_to_kph(ValueType mps)
+{
+    return mps * 60.0 * 60.0 / 1000.0;
+}
+
+template<typename ValueType>
+ValueType mps_to_mph(ValueType mps)
+{
+    return mps * 60.0 * 60.0 * 3.28084 / 5280.0;
+}
+
+template<typename ValueType>
+ValueType m_to_miles(ValueType m)
+{
+    return m * 3.28084 / 5280.0;
+}
+
+template<typename ValueType>
+ValueType m_to_ft(ValueType m)
+{
+    return m * 3.28084;
+}
+
+
+class GpxParser
+{
+public:
+    GpxParser(std::shared_ptr<Channel> channel)
+        :
+        stub_(gpxtools::Parser::NewStub(channel))
+    {
+    }
+    bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity)
+    {
+        ClientContext context;
+        std::unique_ptr<ClientWriter<gpxtools::GpxDataChunk> > writer(stub_->parseFile(&context, activity));
+
+        std::string::size_type offset = 0;
+        while (offset < gpxFileData.length())
+        {
+            gpxtools::GpxDataChunk chunk;
+            std::string chunkData = gpxFileData.substr(offset);
+            offset += chunkData.length();
+            chunk.set_data(chunkData);
+            if (!writer->Write(chunk))
+            {
+                return false;
+            }
+        }
+
+        writer->WritesDone();
+        Status status = writer->Finish();
+        return status.ok();
+    }
+private:
+    std::unique_ptr<gpxtools::Parser::Stub> stub_;
+};
+
+using DataStream = std::vector<gpxtools::DataPoint>;
+
+class GpxCalculator
+{
+public:
+    GpxCalculator(std::shared_ptr<Channel> channel)
+        :
+        stub_(gpxtools::GpxCalculator::NewStub(channel))
+    {
+    }
+    bool analyzeTrack(const gpxtools::Track& track, DataStream& dataStream)
+    {
+        ClientContext context;
+        std::unique_ptr<ClientReader<gpxtools::DataPoint> > reader(stub_->analyzeTrack(&context, track));
+
+        gpxtools::DataPoint dataPoint;
+        while (reader->Read(&dataPoint))
+        {
+            dataStream.push_back(dataPoint);
+        }
+        Status status = reader->Finish();
+        return status.ok();
+    }
+    bool summarizeStream(const DataStream& dataStream, gpxtools::DataSummary &dataSummary)
+    {
+        ClientContext context;
+        std::unique_ptr<ClientWriter<gpxtools::DataPoint> > writer(stub_->summarizeStream(&context, &dataSummary));
+
+        for (const auto& dataPoint : dataStream)
+        {
+            if (!writer->Write(dataPoint))
+            {
+                std::cout << "Failed to write data point\n";
+                return false;
+            }
+        }
+
+        writer->WritesDone();
+        Status status = writer->Finish();
+        return status.ok();
+    }
+private:
+    std::unique_ptr<gpxtools::GpxCalculator::Stub> stub_;
+};
 
 std::string readFile(const std::string& fileName)
 {
@@ -26,26 +142,30 @@ std::string readFile(const std::string& fileName)
 
 int parseGpxFile(const std::string& gpxFileName)
 {
-    Parser parser;
+    GpxParser parser(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto gpxData = readFile(gpxFileName);
-    auto activity = parser.parseFile(gpxData);
-    std::cout << "Prased " << activity.tracks()[0].trackSegments()[0].trackPoints().size() << " track points\n";
+    gpxtools::Activity activity;
+    parser.parseFile(gpxData, &activity);
+    std::cout << "Prased " << activity.tracks()[0].tracksegments(0).trackpoints_size() << " track points\n";
     return 0;
 }
 
 int plotStats(const std::string& gpxFileName)
 {
-    Parser parser;
+    auto channel = grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials());
+    GpxParser parser(channel);
     auto gpxData = readFile(gpxFileName);
-    auto activity = parser.parseFile(gpxData);
-    std::cout << "time,altitude (meters),grade,speed (kph),rate of climb (m/s)\n";
-    GpxCalculator calculator;
+    gpxtools::Activity activity;
+    parser.parseFile(gpxData, &activity);
+    std::cout << "time,altitude (meters),grade,speed (kph)\n";
+    GpxCalculator calculator(channel);
     for (const auto& track : activity.tracks())
     {
-        auto dataStream = calculator.analyzeTrack(track);
+        std::vector<gpxtools::DataPoint> dataStream;
+        calculator.analyzeTrack(track, dataStream);
         for (const auto& dp : dataStream)
         {
-            std::cout << dp.relStartTime << "," << dp.totalDistance << "," << dp.altitude << "," << 100 * dp.grade() << "," << mps_to_kph(dp.speed()) << "," << dp.rateOfClimb() << "\n";
+            std::cout << dp.relstarttime() << "," << dp.totaldistance() << "," << dp.altitude() << "," << 100 * dp.grade() << "," << mps_to_kph(dp.speed()) << "\n";
         }
     }
     return 0;
@@ -53,20 +173,28 @@ int plotStats(const std::string& gpxFileName)
 
 int summarize(const std::string& gpxFileName)
 {
-    Parser parser;
+    auto channel = grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials());
+    GpxParser parser(channel);
     auto gpxData = readFile(gpxFileName);
-    auto activity = parser.parseFile(gpxData);
-    GpxCalculator calculator;
+    gpxtools::Activity activity;
+    parser.parseFile(gpxData, &activity);
+    GpxCalculator calculator(channel);
     for (const auto& track : activity.tracks())
     {
-        auto dataStream = calculator.analyzeTrack(track);
-        auto summary = calculator.summarizeStream(dataStream);
-        auto elapsedTime = summary.duration.count();
+        std::vector<gpxtools::DataPoint> dataStream;
+        calculator.analyzeTrack(track, dataStream);
+        gpxtools::DataSummary summary;
+        if (!calculator.summarizeStream(dataStream, summary))
+        {
+            std::cout << "Summarize stream failed\n";
+            return -1;
+        }
+        auto elapsedTime = summary.duration();
         std::cout << "Totalt time: " << uint64_t(elapsedTime) / 3600 << ":" << (uint64_t(elapsedTime) % 3600) / 60 << ":" << ((uint64_t(elapsedTime) % 3600) % 60) << "\n";
-        std::cout << "Totalt distance: " << summary.totalDistance / 1000.0 << " km " << m_to_miles(summary.totalDistance) << " miles\n";
-        std::cout << "Average speed: " << mps_to_kph(summary.totalDistance / elapsedTime) << " km/h " << mps_to_mph(summary.totalDistance / elapsedTime) << "mph\n";
-        std::cout << "Total Ascent: " << summary.totalAscent << " meters " << m_to_ft(summary.totalAscent) << " feet\n";
-        std::cout << "Total Descent: " << summary.totalDescent << " meters " << m_to_ft(summary.totalDescent) << " feet\n";
+        std::cout << "Totalt distance: " << summary.totaldistance() / 1000.0 << " km " << m_to_miles(summary.totaldistance()) << " miles\n";
+        std::cout << "Average speed: " << mps_to_kph(summary.totaldistance() / elapsedTime) << " km/h " << mps_to_mph(summary.totaldistance() / elapsedTime) << "mph\n";
+        std::cout << "Total Ascent: " << summary.totalascent() << " meters " << m_to_ft(summary.totalascent()) << " feet\n";
+        std::cout << "Total Descent: " << summary.totaldescent() << " meters " << m_to_ft(summary.totaldescent()) << " feet\n";
     }
     return 0;
 }

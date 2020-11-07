@@ -1,7 +1,5 @@
 #include "gpxmath.h"
 
-#include "surface_coordinates.h"
-
 namespace gpx
 {
 namespace
@@ -13,9 +11,7 @@ ValueType radians(ValueType v)
     return (v * M_PI) / 180.0;
 }
 
-}   // namepsace
-
-double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordinates& pos2)
+double greatCircleDistance(const gpxtools::SurfaceCoordinates& pos1, const gpxtools::SurfaceCoordinates& pos2)
 {
     auto phi1 = radians(pos1.latitude());
     auto phi2 = radians(pos2.latitude());
@@ -25,5 +21,19 @@ double greatCircleDistance(const SurfaceCoordinates& pos1, const SurfaceCoordina
     auto c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
     return 6371000 * c;
 }
-   
+
+}   // namepsace
+
+double operator-(const gpxtools::SurfaceCoordinates& a, const gpxtools::SurfaceCoordinates& b)
+{
+    return gpx::greatCircleDistance(a, b);
+}
+
+Displacement operator-(const gpxtools::Position& a, const gpxtools::Position& b)
+{
+    auto surfaceDistance = a.coords() - b.coords();
+    auto vertialDistance = a.altitude() - b.altitude();
+    return Displacement(surfaceDistance, vertialDistance);
+}
+
 }   // namepsace gpx

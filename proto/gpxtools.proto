@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package gpxtools;
+
+message SurfaceCoordinates {
+    double latitude = 1;
+    double longitude = 2;
+};
+
+message Position {
+    SurfaceCoordinates coords = 1;
+    double altitude = 2;
+};
+
+ message TrackPoint {
+    Position position = 1;
+    int64 time = 2;
+};
+
+message TrackSegment {
+    repeated TrackPoint trackPoints = 1;
+};
+
+message Track {
+    string name = 1;
+    uint32 type = 2;
+    repeated TrackSegment trackSegments = 3;
+};
+
+message Activity {
+    int64 startTime = 1;
+    repeated Track tracks = 2;
+};
+
+message DataPoint {
+    int64 relStartTime = 1;
+    int32 duration = 2;
+    double altitude = 3;
+    double totalDistance = 4;
+    double horizontalDisplacement = 5;
+    double verticalDisplacement = 6;
+    double speed = 7;
+    double grade = 8;
+};
+
+message DataSummary {
+    int32 duration = 1;
+    double totalDistance = 2;
+    double totalAscent = 3;
+    double totalDescent = 4;
+    double averageSpeed = 5;
+};
+
+message GpxDataChunk {
+    bytes data = 1;
+};
+
+service Parser {
+    rpc parseFile(stream GpxDataChunk) returns(Activity) {}
+};
+
+service GpxCalculator {
+    rpc analyzeTrack(Track) returns(stream DataPoint) {}
+    rpc summarizeStream(stream DataPoint) returns(DataSummary) {}
+};
