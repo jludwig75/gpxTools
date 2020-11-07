@@ -26,7 +26,6 @@ add_executable(gpxcli
                 gpxcli.cpp)
 
 target_link_libraries(gpxcli
-                      xerces-c
                       ${_REFLECTION}
                       ${_GRPC_GRPCPP}
                       ${_PROTOBUF_LIBPROTOBUF})
