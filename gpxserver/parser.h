@@ -12,6 +12,5 @@ public:
     ParserImpl();
     ~ParserImpl();
     grpc::Status parseFile(grpc::ServerContext* context,
-                           grpc::ServerReader<gpxtools::GpxDataChunk>* reader,
-                           gpxtools::Activity* activity) override;
+                            grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream) override;
 };

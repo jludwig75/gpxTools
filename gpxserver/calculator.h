@@ -10,8 +10,7 @@ class GpxCalculatorImpl final : public gpxtools::GpxCalculator::Service
 {
 public:
     grpc::Status analyzeTrack(grpc::ServerContext* context,
-                        const gpxtools::Track* track,
-                        grpc::ServerWriter<gpxtools::DataPoint>* writer) override;
+                        grpc::ServerReaderWriter<gpxtools::DataPoint, gpxtools::TrackPoint>* stream) override;
 
     grpc::Status summarizeStream(grpc::ServerContext* context,
                            grpc::ServerReader<gpxtools::DataPoint>* reader,

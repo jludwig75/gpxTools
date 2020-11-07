@@ -30,7 +30,7 @@ using grpc::StatusCode;
 
 namespace internal
 {
-bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity);
+bool parseFile(const std::string& gpxFileData, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream);
 }
 
 ParserImpl::ParserImpl()
@@ -44,19 +44,18 @@ ParserImpl::~ParserImpl()
 }
 
 grpc::Status ParserImpl::parseFile(grpc::ServerContext* context,
-                        grpc::ServerReader<gpxtools::GpxDataChunk>* reader,
-                        gpxtools::Activity* activity)
+                        grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream)
 {
     std::string gpxData;
 
     gpxtools::GpxDataChunk chunk;
 
-    while (reader->Read(&chunk))
+    while (stream->Read(&chunk))
     {
         gpxData += chunk.data();
     }
 
-    if (!internal::parseFile(gpxData, activity))
+    if (!internal::parseFile(gpxData, stream))
     {
         return Status(StatusCode::INVALID_ARGUMENT, "Invalid GPX data");
     }
@@ -88,9 +87,8 @@ std::time_t parseTimeString(const std::string& timeStr)
 }
 
 
-gpxtools::TrackPoint parseTrackPoint(DOMElement* trackPointElement)
+bool parseTrackPoint(DOMElement* trackPointElement, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream, bool startOfSegment)
 {
-    // TODO: parse this from XML
     double latitude = std::numeric_limits<double>::infinity();
     double longitude = std::numeric_limits<double>::infinity();
     double altitude = std::numeric_limits<double>::infinity();
@@ -155,15 +153,15 @@ gpxtools::TrackPoint parseTrackPoint(DOMElement* trackPointElement)
     gpxtools::TrackPoint trackPoint;
     *trackPoint.mutable_position() = position;
     trackPoint.set_time(time);
-    return trackPoint;
+    trackPoint.set_start_new_segment(startOfSegment);
+    return stream->Write(trackPoint);
 }
 
-gpxtools::TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
+bool parseTrackSegment(DOMElement* trackSegmentElement, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream)
 {
     auto TAG_trackPt = XMLString::transcode("trkpt");
 
-    gpxtools::TrackSegment segment;
-
+    bool startOfSegment = true;
     DOMNodeList* trackSegmentChildren = trackSegmentElement->getChildNodes();
     const  XMLSize_t trackSgementChildrenCount = trackSegmentChildren->getLength();
     for( XMLSize_t t = 0; t < trackSgementChildrenCount; ++t )
@@ -177,16 +175,19 @@ gpxtools::TrackSegment parseTrackSegment(DOMElement* trackSegmentElement)
                         = dynamic_cast< xercesc::DOMElement* >( trackSegmentChildNode );
             if( XMLString::equals(trackSegmentChildElement->getTagName(), TAG_trackPt))
             {
-                auto trackPoint = segment.add_trackpoints();
-                *trackPoint = parseTrackPoint(trackSegmentChildElement);
+                if (!parseTrackPoint(trackSegmentChildElement, stream, startOfSegment))
+                {
+                    return false;
+                }
+                startOfSegment = false;
             }
         }
     }
 
-    return segment;
+    return true;
 }
 
-gpxtools::Track parseTrack(DOMElement* trackElement)
+bool parseTrack(DOMElement* trackElement, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream)
 {
     auto TAG_trackSeg = XMLString::transcode("trkseg");
     auto TAG_name = XMLString::transcode("name");
@@ -194,7 +195,6 @@ gpxtools::Track parseTrack(DOMElement* trackElement)
 
     std::string trackName = "";
     unsigned trackType = UINT_MAX;
-    DOMElement* foundTrackChildElement = NULL;
 
     DOMNodeList* trackChildren = trackElement->getChildNodes();
     const  XMLSize_t trackCount = trackChildren->getLength();
@@ -209,7 +209,10 @@ gpxtools::Track parseTrack(DOMElement* trackElement)
                         = dynamic_cast< xercesc::DOMElement* >( trackChildNode );
             if( XMLString::equals(trackChildElement->getTagName(), TAG_trackSeg))
             {
-                foundTrackChildElement = trackChildElement;
+                if (!parseTrackSegment(trackChildElement, stream))
+                {
+                    return false;
+                }
             }
             else if( XMLString::equals(trackChildElement->getTagName(), TAG_name))
             {
@@ -225,18 +228,15 @@ gpxtools::Track parseTrack(DOMElement* trackElement)
         }
     }
 
-    gpxtools::Track track;
-    track.set_name(trackName);
-    track.set_type(trackType);
-    assert(foundTrackChildElement != NULL);
-    auto trackSegment = parseTrackSegment(foundTrackChildElement);
-    //track.addTrackSegment(trackSegment);
-    *track.add_tracksegments() = trackSegment;
+    // TODO: replace this
+    // gpxtools::Track track;
+    // track.set_name(trackName);
+    // track.set_type(trackType);
 
-    return track;
+    return true;
 }   // namespace
 
-bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity)
+bool parseFile(const std::string& gpxFileData, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream)
 {
     auto TAG_root = XMLString::transcode("gpx");
     auto TAG_track = XMLString::transcode("trk");
@@ -270,7 +270,10 @@ bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity)
                         = dynamic_cast< xercesc::DOMElement* >( currentNode );
             if( XMLString::equals(currentElement->getTagName(), TAG_track))
             {
-                *activity->add_tracks() = parseTrack(currentElement);
+                if (!parseTrack(currentElement, stream))
+                {
+                    return false;
+                }
             }
             else if( XMLString::equals(currentElement->getTagName(), TAG_metadata))
             {
@@ -291,7 +294,6 @@ bool parseFile(const std::string& gpxFileData, gpxtools::Activity* activity)
                                 DOMNode *node = metadatChildElement->getFirstChild();
                                 std::string timeStr = XMLString::transcode(node->getNodeValue());
                                 std::time_t time = parseTimeString(timeStr);
-                                activity->set_starttime(time);
                             }
                         }
                     }

@@ -11,45 +11,36 @@ using namespace gpx;
 
 
 grpc::Status GpxCalculatorImpl::analyzeTrack(grpc::ServerContext* context,
-                    const gpxtools::Track* track,
-                    grpc::ServerWriter<gpxtools::DataPoint>* writer)
+                        grpc::ServerReaderWriter<gpxtools::DataPoint, gpxtools::TrackPoint>* stream)
 {
-    if (track->tracksegments_size() == 0 || track->tracksegments(0).trackpoints_size() < 2)
-    {
-        return Status(grpc::StatusCode::INVALID_ARGUMENT, "no track points");
-    }
-
-    const gpxtools::TrackPoint* start = NULL;
-    const gpxtools::TrackPoint* previous = NULL;
+    int64_t startTime = INT16_MAX;
+    gpxtools::TrackPoint previous;
     double totalDistance = 0;
 
-    for (const auto& segment : track->tracksegments())
+    gpxtools::TrackPoint point;
+    while (stream->Read(&point))
     {
-        for (const auto& point : segment.trackpoints())
+        if (startTime == INT16_MAX)
         {
-            if (start == NULL)
-            {
-                start = &point;
-            }
-
-            if (previous != NULL)
-            {
-                assert(point.time() >= previous->time());
-
-                auto displacement = point.position() - previous->position();
-                totalDistance += displacement.horizontal;
-                gpxtools::DataPoint dataPoint;
-                dataPoint.set_relstarttime(point.time() - start->time());
-                dataPoint.set_duration(point.time() - previous->time());
-                dataPoint.set_totaldistance(totalDistance);
-                dataPoint.set_altitude(point.position().altitude());
-                dataPoint.set_horizontaldisplacement(displacement.horizontal);
-                dataPoint.set_verticaldisplacement(displacement.vertical);
-                writer->Write(dataPoint);
-            }
-
-            previous = &point;
+            startTime = point.time();
         }
+        else
+        {
+            assert(point.time() >= previous.time());
+
+            auto displacement = point.position() - previous.position();
+            totalDistance += displacement.horizontal;
+            gpxtools::DataPoint dataPoint;
+            dataPoint.set_relstarttime(point.time() - startTime);
+            dataPoint.set_duration(point.time() - previous.time());
+            dataPoint.set_totaldistance(totalDistance);
+            dataPoint.set_altitude(point.position().altitude());
+            dataPoint.set_horizontaldisplacement(displacement.horizontal);
+            dataPoint.set_verticaldisplacement(displacement.vertical);
+            stream->Write(dataPoint);
+        }
+
+        previous = point;
     }
 
     return Status::OK;
