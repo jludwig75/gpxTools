@@ -25,6 +25,8 @@ message Track {
     string name = 1;
     uint32 type = 2;
     repeated TrackSegment trackSegments = 3;
+    bool start_new_segment = 4;
+    string track_name = 5;
 };
 
 message Activity {

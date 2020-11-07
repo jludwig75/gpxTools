@@ -1,5 +1,5 @@
 add_library(gpx STATIC
-            parser.cpp
+            gpxparser.cpp
             gpxmath.cpp)
 
 target_link_libraries(gpx
