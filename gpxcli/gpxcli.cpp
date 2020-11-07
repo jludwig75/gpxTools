@@ -1,4 +1,4 @@
-#include <deque>
+//#include <deque>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
@@ -13,6 +13,8 @@
 #include <grpcpp/security/credentials.h>
 
 #include "gpxtools.grpc.pb.h"
+
+#include "conatiners.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -49,7 +51,7 @@ ValueType m_to_ft(ValueType m)
 }
 
 
-using TrackPoints=std::deque<gpxtools::TrackPoint>;
+using TrackPoints=Container<gpxtools::TrackPoint>;
 
 class GpxParser
 {
@@ -96,7 +98,7 @@ private:
     std::unique_ptr<gpxtools::Parser::Stub> stub_;
 };
 
-using DataStream = std::deque<gpxtools::DataPoint>;
+using DataStream = Container<gpxtools::DataPoint>;
 
 class GpxCalculator
 {
