@@ -7,8 +7,8 @@
 
 #include "gpxtools.grpc.pb.h"
 
-#include "gpx/gpxmath.h"
-#include "gpx/parser.h"
+#include "gpxmath.h"
+#include "parser.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
