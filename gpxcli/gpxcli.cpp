@@ -1,3 +1,4 @@
+#include <deque>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
@@ -48,7 +49,7 @@ ValueType m_to_ft(ValueType m)
 }
 
 
-using TrackPoints=std::vector<gpxtools::TrackPoint>;
+using TrackPoints=std::deque<gpxtools::TrackPoint>;
 
 class GpxParser
 {
@@ -94,7 +95,7 @@ private:
     std::unique_ptr<gpxtools::Parser::Stub> stub_;
 };
 
-using DataStream = std::vector<gpxtools::DataPoint>;
+using DataStream = std::deque<gpxtools::DataPoint>;
 
 class GpxCalculator
 {
@@ -186,7 +187,7 @@ int plotStats(const std::string& gpxFileName)
     TrackPoints trackPoints;
     parser.parseFile(gpxData, trackPoints);
 
-    std::vector<gpxtools::DataPoint> dataStream;
+    DataStream dataStream;
     calculator.analyzeTrack(trackPoints, dataStream);
 
     std::cout << "time,altitude (meters),grade,speed (kph)\n";
@@ -208,7 +209,7 @@ int summarize(const std::string& gpxFileName)
     TrackPoints trackPoints;
     parser.parseFile(gpxData, trackPoints);
 
-    std::vector<gpxtools::DataPoint> dataStream;
+    DataStream dataStream;
     calculator.analyzeTrack(trackPoints, dataStream);
 
     gpxtools::DataSummary summary;

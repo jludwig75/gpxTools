@@ -1,0 +1,12 @@
+#!/bin/bash
+pkill -f gpxServer
+pushd build
+make clean
+make -j4
+./gpx/test/test_gpxmath
+./gpxserver/gpxServer &
+./gpxcli/gpxcli parse ../Big_CC_Loop.gpx
+./gpxcli/gpxcli summarize ../Big_CC_Loop.gpx
+./gpxcli/gpxcli plot ../Big_CC_Loop.gpx | wc -l
+pkill -f gpxServer
+popd
