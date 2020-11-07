@@ -63,19 +63,22 @@ public:
         ClientContext context;
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::GpxDataChunk, gpxtools::TrackPoint> > stream(stub_->parseFile(&context));
 
-        std::string::size_type offset = 0;
-        while (offset < gpxFileData.length())
-        {
-            gpxtools::GpxDataChunk chunk;
-            std::string chunkData = gpxFileData.substr(offset);
-            offset += chunkData.length();
-            chunk.set_data(chunkData);
-            if (!stream->Write(chunk))
+        std::thread writer([&stream, &gpxFileData]() {
+            std::string::size_type offset = 0;
+            while (offset < gpxFileData.length())
             {
-                return false;
+                gpxtools::GpxDataChunk chunk;
+                std::string chunkData = gpxFileData.substr(offset);
+                offset += chunkData.length();
+                chunk.set_data(chunkData);
+                if (!stream->Write(chunk))
+                {
+                    // TODO: Handle error.
+                    return;
+                }
             }
-        }
-        stream->WritesDone();
+            stream->WritesDone();
+        });
 
         gpxtools::TrackPoint trackPoint;
         while (stream->Read(&trackPoint))
@@ -83,6 +86,7 @@ public:
             trackPoints.push_back(trackPoint);
         }
 
+        writer.join();
         Status status = stream->Finish();
         return status.ok();
     }
@@ -121,8 +125,8 @@ public:
         {
             dataStream.push_back(dataPoint);
         }
-        writer.join();
 
+        writer.join();
         Status status = stream->Finish();
         return status.ok();
     }
@@ -139,8 +143,8 @@ public:
                 return false;
             }
         }
-
         writer->WritesDone();
+
         Status status = writer->Finish();
         return status.ok();
     }
