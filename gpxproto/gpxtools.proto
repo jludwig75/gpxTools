@@ -19,21 +19,6 @@ message Position {
     string track_name = 4;
 };
 
-message TrackSegment {
-    repeated TrackPoint trackPoints = 1;
-};
-
-message Track {
-    string name = 1;
-    uint32 type = 2;
-    repeated TrackSegment trackSegments = 3;
-};
-
-message Activity {
-    int64 startTime = 1;
-    repeated Track tracks = 2;
-};
-
 message DataPoint {
     int64 relStartTime = 1;
     int32 duration = 2;
