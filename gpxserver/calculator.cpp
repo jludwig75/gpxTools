@@ -37,6 +37,14 @@ grpc::Status GpxCalculatorImpl::analyzeTrack(grpc::ServerContext* context,
             dataPoint.set_altitude(point.position().altitude());
             dataPoint.set_horizontaldisplacement(displacement.horizontal);
             dataPoint.set_verticaldisplacement(displacement.vertical);
+            if (dataPoint.duration() > 0)
+            {
+                dataPoint.set_speed(dataPoint.horizontaldisplacement() / dataPoint.duration());
+            }
+            if (dataPoint.horizontaldisplacement() > 0)
+            {
+                dataPoint.set_grade(dataPoint.verticaldisplacement() / dataPoint.horizontaldisplacement());
+            }
             stream->Write(dataPoint);
         }
 
