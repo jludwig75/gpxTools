@@ -5,4 +5,5 @@ add_executable(gpxServer
 
 target_link_libraries(gpxServer
               gpx
-              gpxproto)
+              gpxproto
+              xerces-c)

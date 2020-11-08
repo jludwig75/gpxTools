@@ -4,8 +4,9 @@
 
 #include <cfloat>
 
-#include "gpxmath.h"
 #include "gpxtools.pb.h"
+#include "gpxmath.h"
+
 
 using namespace gpx;
 

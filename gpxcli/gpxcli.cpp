@@ -7,7 +7,6 @@
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
@@ -15,15 +14,12 @@
 
 #include "conatiner.h"
 
+#include "gpxparser.h"
+#include "gpxcalculator.h"
+
+
 using grpc::Channel;
-using grpc::ClientContext;
-using grpc::ClientReader;
-using grpc::ClientReaderWriter;
-using grpc::ClientWriter;
-using grpc::Status;
 
-
-#define MAX_DATA_CHUNCK_SIZE    (64 * 1024)
 
 template<typename ValueType>
 ValueType mps_to_kph(ValueType mps)
@@ -49,113 +45,6 @@ ValueType m_to_ft(ValueType m)
     return m * 3.28084;
 }
 
-
-class GpxParser
-{
-public:
-    using TrackPoints=Container<gpxtools::TrackPoint>;
-    GpxParser(std::shared_ptr<Channel> channel)
-        :
-        stub_(gpxtools::Parser::NewStub(channel))
-    {
-    }
-    bool parseFile(const std::string& gpxFileData, TrackPoints& trackPoints)
-    {
-        ClientContext context;
-        std::unique_ptr<grpc::ClientReaderWriter<gpxtools::GpxDataChunk, gpxtools::TrackPoint> > stream(stub_->parseFile(&context));
-
-        std::thread writer([&stream, &gpxFileData]() {
-            std::string::size_type offset = 0;
-            while (offset < gpxFileData.length())
-            {
-                gpxtools::GpxDataChunk chunk;
-                std::string chunkData = gpxFileData.substr(offset);
-                offset += chunkData.length();
-                chunk.set_data(chunkData);
-                if (!stream->Write(chunk))
-                {
-                    // TODO: Handle error.
-                    return;
-                }
-            }
-            stream->WritesDone();
-        });
-
-        gpxtools::TrackPoint trackPoint;
-        while (stream->Read(&trackPoint))
-        {
-            trackPoints.push(trackPoint);
-        }
-        trackPoints.done_pushing();
-
-        writer.join();
-        Status status = stream->Finish();
-        return status.ok();
-    }
-private:
-    std::unique_ptr<gpxtools::Parser::Stub> stub_;
-};
-
-
-class GpxCalculator
-{
-public:
-    using DataStream = Container<gpxtools::DataPoint>;
-    GpxCalculator(std::shared_ptr<Channel> channel)
-        :
-        stub_(gpxtools::GpxCalculator::NewStub(channel))
-    {
-    }
-    bool analyzeTrack(Container<gpxtools::TrackPoint>& trackPoints, DataStream& dataStream)
-    {
-        ClientContext context;
-        std::unique_ptr<grpc::ClientReaderWriter<gpxtools::TrackPoint, gpxtools::DataPoint> > stream(stub_->analyzeTrack(&context));
-
-        std::thread writer([&stream, &trackPoints]() {
-            gpxtools::TrackPoint trackPoint;
-            while (trackPoints.pop(trackPoint))
-            {
-                if (!stream->Write(trackPoint))
-                {
-                    return false;
-                }
-            }
-            stream->WritesDone();
-        });
-
-        gpxtools::DataPoint dataPoint;
-        while (stream->Read(&dataPoint))
-        {
-            dataStream.push(dataPoint);
-        }
-        dataStream.done_pushing();
-
-        writer.join();
-        Status status = stream->Finish();
-        return status.ok();
-    }
-    bool summarizeStream(DataStream& dataStream, gpxtools::DataSummary &dataSummary)
-    {
-        ClientContext context;
-        std::unique_ptr<ClientWriter<gpxtools::DataPoint> > writer(stub_->summarizeStream(&context, &dataSummary));
-
-        gpxtools::DataPoint dataPoint;
-        while (dataStream.pop(dataPoint))
-        {
-            if (!writer->Write(dataPoint))
-            {
-                std::cout << "Failed to write data point\n";
-                return false;
-            }
-        }
-        writer->WritesDone();
-
-        Status status = writer->Finish();
-        return status.ok();
-    }
-private:
-    std::unique_ptr<gpxtools::GpxCalculator::Stub> stub_;
-};
 
 std::string readFile(const std::string& fileName)
 {
