@@ -3,7 +3,7 @@ pkill -f gpxServer
 pushd build
 make clean
 make -j4
-./gpx/test/test_gpxmath
+./gpxserver/test/test_gpxmath
 ./gpxserver/gpxServer &
 sleep 1
 echo '"Testing "parse"'

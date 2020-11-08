@@ -1,9 +1,11 @@
 add_executable(gpxServer
                 gpxServer.cpp
                 calculator.cpp
-                parser.cpp)
+                parser.cpp
+                gpxmath.cpp)
 
 target_link_libraries(gpxServer
-              gpx
               gpxproto
               xerces-c)
+
+add_subdirectory(test)

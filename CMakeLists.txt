@@ -44,6 +44,5 @@ endif()
 
 add_subdirectory(catch2)
 add_subdirectory(gpxproto)
-add_subdirectory(gpx)
 add_subdirectory(gpxcli)
 add_subdirectory(gpxserver)
