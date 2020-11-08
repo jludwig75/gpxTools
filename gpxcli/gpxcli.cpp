@@ -13,7 +13,7 @@
 
 #include "gpxtools.grpc.pb.h"
 
-#include "conatiners.h"
+#include "conatiner.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -50,18 +50,16 @@ ValueType m_to_ft(ValueType m)
 }
 
 
-using TrackPoints=Container<gpxtools::TrackPoint>;
-
 class GpxParser
 {
 public:
+    using TrackPoints=Container<gpxtools::TrackPoint>;
     GpxParser(std::shared_ptr<Channel> channel)
         :
         stub_(gpxtools::Parser::NewStub(channel))
     {
     }
-    template<typename TrackPointTarget>
-    bool parseFile(const std::string& gpxFileData, TrackPointTarget& trackPoints)
+    bool parseFile(const std::string& gpxFileData, TrackPoints& trackPoints)
     {
         ClientContext context;
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::GpxDataChunk, gpxtools::TrackPoint> > stream(stub_->parseFile(&context));
@@ -98,18 +96,17 @@ private:
     std::unique_ptr<gpxtools::Parser::Stub> stub_;
 };
 
-using DataStream = Container<gpxtools::DataPoint>;
 
 class GpxCalculator
 {
 public:
+    using DataStream = Container<gpxtools::DataPoint>;
     GpxCalculator(std::shared_ptr<Channel> channel)
         :
         stub_(gpxtools::GpxCalculator::NewStub(channel))
     {
     }
-    template<typename TrackPointSource, typename DataPointTarget>
-    bool analyzeTrack(TrackPointSource& trackPoints, DataPointTarget& dataStream)
+    bool analyzeTrack(Container<gpxtools::TrackPoint>& trackPoints, DataStream& dataStream)
     {
         ClientContext context;
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::TrackPoint, gpxtools::DataPoint> > stream(stub_->analyzeTrack(&context));
@@ -137,8 +134,7 @@ public:
         Status status = stream->Finish();
         return status.ok();
     }
-    template<typename DataPointSource>
-    bool summarizeStream(DataPointSource& dataStream, gpxtools::DataSummary &dataSummary)
+    bool summarizeStream(DataStream& dataStream, gpxtools::DataSummary &dataSummary)
     {
         ClientContext context;
         std::unique_ptr<ClientWriter<gpxtools::DataPoint> > writer(stub_->summarizeStream(&context, &dataSummary));
@@ -180,10 +176,10 @@ int parseGpxFile(const std::string& gpxFileName)
     GpxParser parser(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto gpxData = readFile(gpxFileName);
 
-    TrackPoints trackPoints;
+    GpxParser::TrackPoints trackPoints;
     parser.parseFile(gpxData, trackPoints);
 
-    std::cout << "Prased " << trackPoints.size() << " track points\n";
+    std::cout << "Parsed " << trackPoints.size() << " track points\n";
     return 0;
 }
 
@@ -193,13 +189,13 @@ int plotStats(const std::string& gpxFileName)
     GpxParser parser(channel);
     GpxCalculator calculator(channel);
 
-    TrackPoints trackPoints;
+    GpxParser::TrackPoints trackPoints;
     std::thread parserThread([gpxFileName, &parser, &trackPoints](){
         auto gpxData = readFile(gpxFileName);
         parser.parseFile(gpxData, trackPoints);
     });
 
-    DataStream dataStream;
+    GpxCalculator::DataStream dataStream;
     std::thread analyzeThread([&calculator, &trackPoints, &dataStream](){
         calculator.analyzeTrack(trackPoints, dataStream);
     });
@@ -223,13 +219,13 @@ int summarize(const std::string& gpxFileName)
     GpxParser parser(channel);
     GpxCalculator calculator(channel);
 
-    TrackPoints trackPoints;
+    GpxParser::TrackPoints trackPoints;
     std::thread parserThread([gpxFileName, &parser, &trackPoints](){
         auto gpxData = readFile(gpxFileName);
         parser.parseFile(gpxData, trackPoints);
     });
 
-    DataStream dataStream;
+    GpxCalculator::DataStream dataStream;
     std::thread analyzeThread([&calculator, &trackPoints, &dataStream](){
         calculator.analyzeTrack(trackPoints, dataStream);
     });

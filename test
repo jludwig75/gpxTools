@@ -8,7 +8,7 @@ make -j4
 sleep 1
 echo '"Testing "parse"'
 ./gpxcli/gpxcli parse ../Big_CC_Loop.gpx
-echo '"Testing "parse"'
+echo '"Testing "summarize"'
 ./gpxcli/gpxcli summarize ../Big_CC_Loop.gpx
 echo '"Testing "plot"'
 ./gpxcli/gpxcli plot ../Big_CC_Loop.gpx | head
