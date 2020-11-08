@@ -5,8 +5,13 @@ make clean
 make -j4
 ./gpx/test/test_gpxmath
 ./gpxserver/gpxServer &
+sleep 1
+echo '"Testing "parse"'
 ./gpxcli/gpxcli parse ../Big_CC_Loop.gpx
+echo '"Testing "parse"'
 ./gpxcli/gpxcli summarize ../Big_CC_Loop.gpx
+echo '"Testing "plot"'
+./gpxcli/gpxcli plot ../Big_CC_Loop.gpx | head
 ./gpxcli/gpxcli plot ../Big_CC_Loop.gpx | wc -l
 pkill -f gpxServer
 popd

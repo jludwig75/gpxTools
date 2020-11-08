@@ -1,4 +1,3 @@
-//#include <deque>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
@@ -87,8 +86,9 @@ public:
         gpxtools::TrackPoint trackPoint;
         while (stream->Read(&trackPoint))
         {
-            trackPoints.push_back(trackPoint);
+            trackPoints.push(trackPoint);
         }
+        trackPoints.done_pushing();
 
         writer.join();
         Status status = stream->Finish();
@@ -115,11 +115,9 @@ public:
         std::unique_ptr<grpc::ClientReaderWriter<gpxtools::TrackPoint, gpxtools::DataPoint> > stream(stub_->analyzeTrack(&context));
 
         std::thread writer([&stream, &trackPoints]() {
-            while (!trackPoints.empty())
+            gpxtools::TrackPoint trackPoint;
+            while (trackPoints.pop(trackPoint))
             {
-                auto trackPoint = trackPoints.front();
-                trackPoints.pop_front();
-
                 if (!stream->Write(trackPoint))
                 {
                     return false;
@@ -131,8 +129,9 @@ public:
         gpxtools::DataPoint dataPoint;
         while (stream->Read(&dataPoint))
         {
-            dataStream.push_back(dataPoint);
+            dataStream.push(dataPoint);
         }
+        dataStream.done_pushing();
 
         writer.join();
         Status status = stream->Finish();
@@ -144,11 +143,9 @@ public:
         ClientContext context;
         std::unique_ptr<ClientWriter<gpxtools::DataPoint> > writer(stub_->summarizeStream(&context, &dataSummary));
 
-        while (!dataStream.empty())
+        gpxtools::DataPoint dataPoint;
+        while (dataStream.pop(dataPoint))
         {
-            auto dataPoint = dataStream.front();
-            dataStream.pop_front();
-
             if (!writer->Write(dataPoint))
             {
                 std::cout << "Failed to write data point\n";
@@ -182,8 +179,10 @@ int parseGpxFile(const std::string& gpxFileName)
 {
     GpxParser parser(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     auto gpxData = readFile(gpxFileName);
+
     TrackPoints trackPoints;
     parser.parseFile(gpxData, trackPoints);
+
     std::cout << "Prased " << trackPoints.size() << " track points\n";
     return 0;
 }
@@ -194,20 +193,26 @@ int plotStats(const std::string& gpxFileName)
     GpxParser parser(channel);
     GpxCalculator calculator(channel);
 
-    auto gpxData = readFile(gpxFileName);
     TrackPoints trackPoints;
-    parser.parseFile(gpxData, trackPoints);
+    std::thread parserThread([gpxFileName, &parser, &trackPoints](){
+        auto gpxData = readFile(gpxFileName);
+        parser.parseFile(gpxData, trackPoints);
+    });
 
     DataStream dataStream;
-    calculator.analyzeTrack(trackPoints, dataStream);
+    std::thread analyzeThread([&calculator, &trackPoints, &dataStream](){
+        calculator.analyzeTrack(trackPoints, dataStream);
+    });
 
     std::cout << "time,altitude (meters),grade,speed (kph)\n";
-    while (!dataStream.empty())
+    gpxtools::DataPoint dp;
+    while (dataStream.pop(dp))
     {
-        auto dp = dataStream.front();
-        dataStream.pop_front();
         std::cout << dp.relstarttime() << "," << dp.totaldistance() << "," << dp.altitude() << "," << 100 * dp.grade() << "," << mps_to_kph(dp.speed()) << "\n";
     }
+
+    parserThread.join();
+    analyzeThread.join();
 
     return 0;
 }
@@ -218,12 +223,16 @@ int summarize(const std::string& gpxFileName)
     GpxParser parser(channel);
     GpxCalculator calculator(channel);
 
-    auto gpxData = readFile(gpxFileName);
     TrackPoints trackPoints;
-    parser.parseFile(gpxData, trackPoints);
+    std::thread parserThread([gpxFileName, &parser, &trackPoints](){
+        auto gpxData = readFile(gpxFileName);
+        parser.parseFile(gpxData, trackPoints);
+    });
 
     DataStream dataStream;
-    calculator.analyzeTrack(trackPoints, dataStream);
+    std::thread analyzeThread([&calculator, &trackPoints, &dataStream](){
+        calculator.analyzeTrack(trackPoints, dataStream);
+    });
 
     gpxtools::DataSummary summary;
     if (!calculator.summarizeStream(dataStream, summary))
@@ -238,6 +247,10 @@ int summarize(const std::string& gpxFileName)
     std::cout << "Average speed: " << mps_to_kph(summary.totaldistance() / elapsedTime) << " km/h " << mps_to_mph(summary.totaldistance() / elapsedTime) << "mph\n";
     std::cout << "Total Ascent: " << summary.totalascent() << " meters " << m_to_ft(summary.totalascent()) << " feet\n";
     std::cout << "Total Descent: " << summary.totaldescent() << " meters " << m_to_ft(summary.totaldescent()) << " feet\n";
+
+    parserThread.join();
+    analyzeThread.join();
+
     return 0;
 }
 
