@@ -30,7 +30,7 @@ public:
         return true;
     }
 
-    void push(DataType& data)
+    void push(const DataType& data)
     {
         {
             std::unique_lock lock(_lock);

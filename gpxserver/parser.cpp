@@ -154,7 +154,7 @@ bool parseTrackPoint(DOMElement* trackPointElement, grpc::ServerReaderWriter<gpx
     *trackPoint.mutable_position() = position;
     trackPoint.set_time(time);
     trackPoint.set_start_new_segment(startOfSegment);
-    return stream->Write(trackPoint);
+    return stream->Write(std::move(trackPoint));
 }
 
 bool parseTrackSegment(DOMElement* trackSegmentElement, grpc::ServerReaderWriter<gpxtools::TrackPoint, gpxtools::GpxDataChunk>* stream)

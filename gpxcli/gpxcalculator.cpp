@@ -24,7 +24,7 @@ bool GpxCalculator::analyzeTrack(Container<gpxtools::TrackPoint>& trackPoints, D
         gpxtools::TrackPoint trackPoint;
         while (trackPoints.pop(trackPoint))
         {
-            if (!stream->Write(trackPoint))
+            if (!stream->Write(std::move(trackPoint)))
             {
                 return false;
             }
@@ -35,7 +35,7 @@ bool GpxCalculator::analyzeTrack(Container<gpxtools::TrackPoint>& trackPoints, D
     gpxtools::DataPoint dataPoint;
     while (stream->Read(&dataPoint))
     {
-        dataStream.push(dataPoint);
+        dataStream.push(std::move(dataPoint));
     }
     dataStream.done_pushing();
 
@@ -52,7 +52,7 @@ bool GpxCalculator::summarizeStream(DataStream& dataStream, gpxtools::DataSummar
     gpxtools::DataPoint dataPoint;
     while (dataStream.pop(dataPoint))
     {
-        if (!writer->Write(dataPoint))
+        if (!writer->Write(std::move(dataPoint)))
         {
             std::cout << "Failed to write data point\n";
             return false;

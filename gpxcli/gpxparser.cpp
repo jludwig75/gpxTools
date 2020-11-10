@@ -24,7 +24,7 @@ bool GpxParser::parseFile(const std::string& gpxFileData, TrackPoints& trackPoin
     ClientContext context;
     std::unique_ptr<grpc::ClientReaderWriter<gpxtools::GpxDataChunk, gpxtools::TrackPoint> > stream(stub_->parseFile(&context));
 
-    std::thread writer([&stream, &gpxFileData]() {
+    std::thread writer([&stream, gpxFileData]() {
         std::string::size_type offset = 0;
         while (offset < gpxFileData.length())
         {
@@ -32,7 +32,7 @@ bool GpxParser::parseFile(const std::string& gpxFileData, TrackPoints& trackPoin
             std::string chunkData = gpxFileData.substr(offset, MAX_DATA_CHUNCK_SIZE);
             offset += chunkData.length();
             chunk.set_data(chunkData);
-            if (!stream->Write(chunk))
+            if (!stream->Write(std::move(chunk)))
             {
                 // TODO: Handle error.
                 return;
